@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>SkinScope AI | Educational Research Prototype</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand-mark">S</div>
+    <div><div class="brand">SkinScope <span>AI</span></div><div class="tagline">TRANSFER LEARNING · RESEARCH PROTOTYPE</div></div>
+    <div class="status"><i></i>{% if model_ready %}Model loaded{% else %}Model not trained{% endif %}</div>
+  </header>
+  <main class="wrap">
+    <section class="hero">
+      <div class="eyebrow">STUDENT RESEARCH PROJECT · 8080120</div>
+      <h1>Skin Lesion<br><span>Classification</span></h1>
+      <p class="lead">Explore how transfer learning classifies dermatoscopic images into categories found in a public research dataset.</p>
+      <div class="notice"><strong>Research use only</strong><p>This tool is not a medical diagnosis, does not assess your personal health, and must not guide treatment decisions. Model predictions can be incorrect.</p></div>
+    </section>
+
+    <section class="panel">
+      <div class="section-head"><div><div class="eyebrow">01 / IMAGE INPUT</div><h2>Upload a dataset image</h2></div><span class="chip">JPG · PNG · 8 MB max</span></div>
+      <form method="post" enctype="multipart/form-data">
+        <label class="dropzone" for="image">
+          <div class="upload-icon">↑</div><strong>Choose a skin-lesion image</strong>
+          <span id="file-label">Use an image from your permitted research dataset</span>
+          <input id="image" name="image" type="file" accept=".jpg,.jpeg,.png,image/jpeg,image/png" required>
+        </label>
+        <div class="symptom-fields">
+          <h3>Optional private symptom log</h3>
+          <p class="small-note">These are your own observations, not medical measurements. Scores do not diagnose or grade a condition.</p>
+          <label>Symptoms / affected area <input name="symptoms" type="text" maxlength="500" placeholder="e.g., dry patch on hand"></label>
+          <div class="range-grid">
+            <label>Itching (0–5)<select name="itch_score"><option value="0">0 — none / not recorded</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>Redness (0–5)<select name="redness_score"><option value="0">0 — none / not recorded</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+            <label>Dryness (0–5)<select name="dryness_score"><option value="0">0 — none / not recorded</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option></select></label>
+          </div>
+          <label>Notes <textarea name="notes" maxlength="2000" rows="3" placeholder="Optional notes for your own records"></textarea></label>
+        </div>
+        <button type="submit">Run classification <span>↗</span></button>
+      </form>
+      {% if error %}<div class="error">{{ error }}</div>{% endif %}
+      {% if not model_ready %}<div class="hint">The website shell works now, but prediction is disabled until the dataset is prepared and <code>python train.py</code> finishes successfully.</div>{% endif %}
+    </section>
+
+    {% if result %}
+    <section class="panel result-panel">
+      <div class="eyebrow">02 / MODEL OUTPUT</div><h2>Predicted dataset category</h2>
+      <div class="result-grid">
+        <div class="preview">{% if image_url %}<img src="{{ image_url }}" alt="Uploaded image preview">{% endif %}</div>
+        <div class="prediction">
+          <div class="prediction-label">{{ result.top.label }}</div>
+          <div class="prediction-desc">{{ result.top.description }}</div>
+          <div class="score">{{ "%.1f"|format(result.top.score) }}<small>% model score</small></div>
+          <p class="small-note">This score is not a calibrated probability of disease and is not a measure of medical certainty.</p>
+        </div>
+      </div>
+      <h3>Class score distribution</h3>
+      <div class="scores">
+        {% for item in result.scores %}
+        <div class="score-row">
+          <div class="score-label"><span>{{ item.label }} <small>{{ item.description }}</small></span><b>{{ "%.1f"|format(item.score) }}%</b></div>
+          <div class="track"><div class="bar" style="width: {{ [item.score, 100]|min }}%"></div></div>
+        </div>
+        {% endfor %}
+      </div>
+      <div class="notice"><strong>Do not use this result for care decisions.</strong><p>If you are concerned about a skin change, speak with a qualified healthcare professional.</p></div>
+    </section>
+    {% endif %}
+
+    <section class="stats">
+      <div class="stat"><span>MODEL</span><strong>MobileNetV2</strong><small>Transfer learning + fine-tuning</small></div>
+      <div class="stat"><span>DATASET</span><strong>HAM10000</strong><small>Seven labelled categories</small></div>
+      <div class="stat"><span>EVALUATION</span><strong>Held-out test set</strong><small>Class-wise metrics + confusion matrix</small></div>
+    </section>
+    <footer>
+      <div><strong>SkinScope AI</strong><p>Designed for educational research only.</p></div>
+      <div class="student">MEHRUNBEE DASTGEER MULLA<br>Register No. 8080120</div>
+    </footer>
+  </main>
+  <script>
+    const input = document.getElementById('image');
+    const label = document.getElementById('file-label');
+    input.addEventListener('change', () => {
+      label.textContent = input.files.length ? input.files[0].name : 'Use an image from your permitted research dataset';
+    });
+  </script>
+</body>
+</html>
